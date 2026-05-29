@@ -3,7 +3,7 @@ import { Card, CardContent } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Info, Save, Camera, Loader2, ChevronDown, ChevronUp, Copy, Maximize2 } from 'lucide-react';
-import { formatCurrency, formatPercent, vibrate } from '../../utils/helpers';
+import { formatCurrency, formatPercent, vibrate, exportToCSV } from '../../utils/helpers';
 import { useStore } from '../../store/useStore';
 import { Tooltip } from '../ui/Tooltip';
 import { CopyButton } from '../ui/CopyButton';
@@ -12,6 +12,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } 
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { AdSpendBurn } from './AdSpendBurn';
 import { useQuickRun } from '../../hooks/useQuickRun';
+import { FileSpreadsheet } from 'lucide-react';
 
 const PLATFORMS = {
   shopify: { name: 'Shopify', fee: 2.0 },
@@ -135,6 +136,26 @@ export function TrueCostCalc() {
     { name: 'Gateway', value: gatewayCut, color: '#8b5cf6' },
     { name: 'Profit', value: Math.max(0, netProfit), color: '#10b981' }
   ].filter(d => d.value > 0);
+
+  const handleExport = () => {
+    vibrate(20);
+    const headers = ['Metric', 'Value'];
+    const rows = [
+      ['Platform', PLATFORMS[platform].name],
+      ['Gateway', GATEWAYS[gateway].name],
+      ['Selling Price', formatCurrency(p)],
+      ['Supplier Cost', formatCurrency(c)],
+      ['Shipping Cost', formatCurrency(s)],
+      ['Marketing Cost (CPA)', formatCurrency(marketing)],
+      ['Platform Fee', formatCurrency(platformCut)],
+      ['Gateway Fee', formatCurrency(gatewayCut)],
+      ['Total Costs', formatCurrency(totalCosts)],
+      ['Net Profit', formatCurrency(netProfit)],
+      ['Net Margin', `${netMargin.toFixed(2)}%`],
+      ['Break-Even ROAS', breakevenRoas.toFixed(2)]
+    ];
+    exportToCSV(`true-cost-analysis-${Date.now()}`, headers, rows);
+  };
 
   const openPiP = async () => {
     if ('documentPictureInPicture' in window) {
@@ -352,9 +373,15 @@ export function TrueCostCalc() {
                     <Maximize2 className="w-3 h-3" />
                  </button>
               </div>
-              <Button variant="outline" size="sm" onClick={handleSaveToTape} className="text-white border-slate-700 hover:bg-slate-800 h-8 text-xs font-bold tracking-widest hidden lg:flex">
-                SAVE (CTRL+S)
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleExport} className="text-white border-slate-700 hover:bg-slate-800 h-8 text-xs font-bold tracking-widest hidden lg:flex items-center gap-2">
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  EXPORT
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleSaveToTape} className="text-white border-slate-700 hover:bg-slate-800 h-8 text-xs font-bold tracking-widest hidden lg:flex">
+                  SAVE (CTRL+S)
+                </Button>
+              </div>
             </div>
 
             <div className="flex flex-col xl:flex-row gap-6">
