@@ -1,0 +1,6 @@
+{
+  "name": "BizCalc Pro",
+  "description": "Professional suite of business calculators including profit margins, break-even analysis, financial health, loans, and operational costs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

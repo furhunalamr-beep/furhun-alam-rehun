@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+
+    // User Profile Validation Helper
+    function isValidUser(data, uid) {
+      return data.keys().hasAll(['email', 'createdAt']) 
+        && data.keys().size() == 2
+        && data.email is string && data.email.size() <= 200
+        && data.createdAt is timestamp;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Must be signed in, ID must be valid, and you can only read/write your own profile
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      
+      // No blanket reads or queries
+      allow list: if false; 
+
+      allow create: if isSignedIn() 
+        && isValidId(userId) 
+        && request.auth.uid == userId 
+        && isValidUser(incoming(), userId)
+        && incoming().createdAt == request.time;
+        
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUser(incoming(), userId)
+        && incoming().createdAt == existing().createdAt; // Immortal field
+        
+      allow delete: if false;
+    }
+  }
+}
